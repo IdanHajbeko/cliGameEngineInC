@@ -33,10 +33,10 @@ int main() {
         if (key == KEY_ESC || key == 'q') break;
         if (key >= '1' && key <= '9') speed = key - '0';
         switch (key) {
-            case KEY_UP: if (!move_object(&bob, bob.x, bob.y-speed, ' ', "\e[5;45m")) putchar('\a'); break;
-            case KEY_DOWN: if (!move_object(&bob, bob.x, bob.y+speed, ' ', "\e[5;45m")) putchar('\a'); break;
-            case KEY_RIGHT: if (!move_object(&bob, bob.x+speed, bob.y, ' ', "\e[5;45m")) putchar('\a'); break;
-            case KEY_LEFT: if (!move_object(&bob, bob.x-speed, bob.y, ' ', "\e[5;45m")) putchar('\a'); break;
+            case KEY_UP: if (!move_object(&bob, bob.x, bob.y-speed, ' ', "\e[5;45m", 0)) putchar('\a'); break;
+            case KEY_DOWN: if (!move_object(&bob, bob.x, bob.y+speed, ' ', "\e[5;45m", 0)) putchar('\a'); break;
+            case KEY_RIGHT: if (!move_object(&bob, bob.x+speed, bob.y, ' ', "\e[5;45m", 0)) putchar('\a'); break;
+            case KEY_LEFT: if (!move_object(&bob, bob.x-speed, bob.y, ' ', "\e[5;45m", 0)) putchar('\a'); break;
             case KEY_SPACE:
                 for (int i = 0; i< screenSizeY; ++i){
                     for (int j = 0; j<screenSizeX; ++j){

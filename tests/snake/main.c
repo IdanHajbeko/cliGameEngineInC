@@ -92,7 +92,7 @@ void move_apple(struct object * apple){
         }
         if (check == 1) break;
     }
-    move_object(apple, x, y, ' ', "\e[47m");
+    move_object(apple, x, y, ' ', "\e[47m", 0);
 }
 
 void show_score(int score) {

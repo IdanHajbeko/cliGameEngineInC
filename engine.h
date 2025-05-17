@@ -56,8 +56,8 @@ void sleep_ms(int milliseconds);
 void startKeyListener();
 struct pixel ** init_space(int x, int y);
 int put_object(struct object * obj);
-int move_object(struct object * obj, int x, int y, char backgroundChar, char * backgroundStyle);
-int clear_object(struct object * obj, char backgroundChar, char * backgroundStyle);
+int move_object(struct object * obj, int x, int y, char backgroundChar, char * backgroundStyle, int id);
+int clear_object(struct object * obj, char backgroundChar, char * backgroundStyle, int id);
 void save_screen(char * fileName);
 int init_object(struct object * obj, int x, int y, int x2 ,int y2);
 void free_object(struct object *obj);
@@ -66,6 +66,8 @@ int check_char_collision(struct object * obj1, char ch, int x, int y);
 int put_object_on_point(struct object * obj, int x, int y);
 int clear_object_on_point(struct object * obj, char backgroundChar, char * backgroundStyle, int x, int y);
 int check_id_collision(struct object *obj1, int id, int x, int y);
+int move_object_with_no_id(struct object * obj, int x, int y, int idToIgnore, char backgroundChar, char * backgroundStyle, int id);
+int put_object_with_no_id(struct object * obj, int idToIgnore);
 #ifdef _WIN32
     void key_listener_thread(void* arg);
 #else

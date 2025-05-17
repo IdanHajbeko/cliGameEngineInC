@@ -49,8 +49,8 @@ void move_all_poles(struct object *poles, int *alive, int *score, int flappyX) {
             putchar('\a');
         }
 
-        if (!move_object(&poles[i], poles[i].x - 1, poles[i].y, ' ', COLOR_BLUE)) {
-            clear_object(&poles[i], ' ', COLOR_BLUE);
+        if (!move_object(&poles[i], poles[i].x - 1, poles[i].y, ' ', COLOR_BLUE, 0)) {
+            clear_object(&poles[i], ' ', COLOR_BLUE, 0);
             free_object(&poles[i]);
             for (int j = i; j < *alive - 1; ++j) {
                 poles[j] = poles[j + 1];
@@ -134,11 +134,11 @@ int main() {
                 run = 0;
                 paint_flappy(&flappy, "\e[41m");
             }
-            move_object(&flappy, flappy.x, flappy.y - 5, ' ', COLOR_BLUE);
+            move_object(&flappy, flappy.x, flappy.y - 5, ' ', COLOR_BLUE, 0);
         }
         if ((time >= 50 - score/5 && 50 - score/5 > 25) || (50 - score/5 <= 25 && time/25>= 25)) {
             move_all_poles(poles, &alivePoles, &score, flappy.x);
-            if(check_style_collision(&flappy, COLOR_GREEN, flappy.x, flappy.y + 1) || !move_object(&flappy, flappy.x, flappy.y + 1, ' ', COLOR_BLUE)) die(&run, &flappy);
+            if(check_style_collision(&flappy, COLOR_GREEN, flappy.x, flappy.y + 1) || !move_object(&flappy, flappy.x, flappy.y + 1, ' ', COLOR_BLUE, 0)) die(&run, &flappy);
             time = 0;
         }
 

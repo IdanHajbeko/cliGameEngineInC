@@ -14,6 +14,10 @@ void init_templates(char *backgroundColor);
 void init_on_screen_block(struct object * template, struct block * blc);
 void init_screen_base_ui();
 struct object * get_random_template();
+void move_block_down(struct block *currentBlock);
+void move_right_left(struct block * currentBlock, int direction);
+void check_for_lines(int y, int y2);
+void move_all_line_down(short y);
 
 void init_templates(char *backgroundColor) {
     init_object(&block1, 0, 0, 16, 2);
@@ -51,7 +55,7 @@ void init_templates(char *backgroundColor) {
         }
     for (int i = 0; i < 4; i++) {
         if (i < 2) {
-            for (int j = 7; j < 12; j++) {
+            for (int j = 8; j < 12; j++) {
                 block3.space[i][j].id = 1;
             }
         } else {
@@ -106,20 +110,14 @@ void init_templates(char *backgroundColor) {
     for (int i = 0; i < 4; i++)
         for (int j = 0; j < 12; j++) {
             block7.space[i][j].ch = ' ';
-            block7.space[i][j].id = 0;
+            if ((i < 2 && j < 8) || (i >= 2 && j > 3)) block7.space[i][j].id = 1;
+            else block7.space[i][j].id = 0;
             block7.space[i][j].style=strdup(backgroundColor);
         }
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 12; j++) {
-            if ((i < 2 && j < 8) || (i >= 2 && j > 3)) {
-                block7.space[i][j].id = 1;
-            }
-        }
-    }
 }
 
 void init_on_screen_block(struct object *template, struct block *blc) {
-    init_object(&blc->obj, screenSizeX/2-template->x2/2, screenSizeY/2-20, screenSizeX/2+template->x2/2, screenSizeY/2-20 + template->y2);
+    init_object(&blc->obj, screenSizeX/2-8, screenSizeY/2-20, screenSizeX/2-8+template->x2, screenSizeY/2-20 + template->y2);
 
     for (int i = 0; i < template->y2; ++i) {
         for (int j = 0; j < template->x2; j++) {
@@ -158,7 +156,7 @@ void init_screen_base_ui(){
         for (int j = screenSizeX/2-20; j < screenSizeX/2+20; j++){
             screen[i][j].ch = ' ';
             screen[i][j].style = "\e[40m";
-            screen[i][j].id = 3;
+            screen[i][j].id = 0;
         }
     }
 }
@@ -175,6 +173,70 @@ struct object * get_random_template(){
     }
 }
 
+void move_block_down(struct block *currentBlock) {
+    if (currentBlock->obj.y2 >= screenSizeY/2+20) {
+        check_for_lines(currentBlock->obj.y, currentBlock->obj.y2);
+        init_on_screen_block(get_random_template(), currentBlock);
+        put_object(&currentBlock->obj);
+        return;
+    }
+
+    for (int i = currentBlock->obj.x; i < currentBlock->obj.x2 ; i++) {
+        if (screen[currentBlock->obj.y2][i].id){
+            if (screen[currentBlock->obj.y2-1][i].id){
+                check_for_lines(currentBlock->obj.y, currentBlock->obj.y2);
+                init_on_screen_block(get_random_template(), currentBlock);
+                put_object(&currentBlock->obj);
+                return;
+            }
+            else{
+                move_object_with_no_id(&currentBlock->obj, currentBlock->obj.x, currentBlock->obj.y + 2, 0, ' ', "\e[40m", 0);
+                return;
+            }
+        }
+    }    
+    move_object(&currentBlock->obj, currentBlock->obj.x, currentBlock->obj.y + 1, ' ', "\e[40m", 0);
+}
+
+void move_right_left(struct block * currentBlock, int direction){ // 0 - left 1 - right
+    if (direction){
+        if (currentBlock->obj.x2 + 4 > screenSizeX/2+20) return;
+        for (int i = currentBlock->obj.y; i < currentBlock->obj.y2; i++) if (screen[i][currentBlock->obj.x2+3].id) return;
+        move_object_with_no_id(&currentBlock->obj, currentBlock->obj.x + 4, currentBlock->obj.y, 0, ' ', "\e[40m", 0);
+    } 
+    else if (!direction){
+        if (currentBlock->obj.x - 4 < screenSizeX/2-20) return;
+        for (int i = currentBlock->obj.y; i < currentBlock->obj.y2; i++) if (screen[i][currentBlock->obj.x-4].id) return;
+        move_object_with_no_id(&currentBlock->obj, currentBlock->obj.x - 4, currentBlock->obj.y, 0, ' ', "\e[40m", 0);
+    }
+}
+
+void check_for_lines(int y, int y2){
+    for(int i = y; i < y2; i++){
+        short allGood = 1;
+        for (int j = screenSizeX/2-20; j < screenSizeX/2+20; j++)
+            if (screen[i][j].id == 0 ) allGood = 0;
+        if (allGood){
+            for (int j = screenSizeX/2-20; j < screenSizeX/2+20; j++) {
+                screen[i][j].id = 0;
+                screen[i][j].style = "\e[40m";
+                sleep_ms(1);
+                print_screen();
+            }
+            move_all_line_down(i);
+        }
+    }
+}
+
+void move_all_line_down(short y){
+    for (int i = y; i > screenSizeY/2-20; i--){
+        for (int j = screenSizeX/2-20; j < screenSizeX/2+20; j++){
+            screen[i][j].style = screen[i-1][j].style;
+            screen[i][j].id = screen[i-1][j].id;
+        }
+    }
+}
+
 int main() {
     srand(time(0));
     get_terminal_size(&screenSizeY, &screenSizeX);
@@ -186,10 +248,6 @@ int main() {
 
     int time = 0;
     struct block *currentBlock = malloc(sizeof(struct block));
-    if (!currentBlock) {
-        perror("Failed to allocate memory");
-        exit(1);
-    }
     init_screen_base_ui();
     init_on_screen_block(get_random_template(), currentBlock);
     put_object(&currentBlock->obj);
@@ -197,15 +255,15 @@ int main() {
         int key = last_key;
         last_key = 999;
         if (key == KEY_ESC || key == 'q') break;
+        if (key == KEY_DOWN) move_block_down(currentBlock);
+        if (key == KEY_RIGHT) move_right_left(currentBlock, 1);
+        if (key == KEY_LEFT) move_right_left(currentBlock, 0);
 
-        if (time >= 500){
-            if (currentBlock->obj.y2 != screenSizeY/2+20) move_object(&currentBlock->obj, currentBlock->obj.x, currentBlock->obj.y+1, ' ', "\e[40m");
-            else {
-                init_on_screen_block(get_random_template(), currentBlock);
-                put_object(&currentBlock->obj);
-            }
+        if (time >= 50){
+            move_block_down(currentBlock);
             time = 0;
         }
+        put_object_on_point(&currentBlock->obj, 10, 10);
         print_screen();
         sleep_ms(16);
         time += 16;

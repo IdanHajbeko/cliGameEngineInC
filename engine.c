@@ -195,26 +195,27 @@ int put_object(struct object * obj){
     return 1;
 }
 
-int clear_object(struct object * obj, char backgroundChar, char * backgroundStyle){
+int clear_object(struct object * obj, char backgroundChar, char * backgroundStyle, int id){
     if (obj->y < 0 || obj->y2 > screenSizeY || obj->x < 0 || obj->x2 > screenSizeX) return 0;
     for (int i = 0; i < obj->y2 - obj->y; i++) {
         for (int j = 0; j < obj->x2 - obj->x; j++) {
             screen[i + obj->y][j + obj->x].ch = backgroundChar;
             screen[i + obj->y][j + obj->x].style = backgroundStyle;
+            screen[i + obj->y][j + obj->x].id = id;
         }
     }
 }
 
 
 // todo - add a full background
-int move_object(struct object * obj, int x, int y, char backgroundChar, char * backgroundStyle) {
+int move_object(struct object * obj, int x, int y, char backgroundChar, char * backgroundStyle, int id) {
     int lenx = obj->x2 - obj->x;
     int leny = obj->y2 - obj->y;
 
     if (x < 0 || y < 0 || x + lenx > screenSizeX || y + leny > screenSizeY)
         return 0;
 
-    clear_object(obj, backgroundChar, backgroundStyle);
+    clear_object(obj, backgroundChar, backgroundStyle, id);
     obj->x = x;
     obj->y = y;
     obj->x2 = x + lenx;
@@ -262,20 +263,14 @@ void free_object(struct object *obj) {
 }
 
 int check_style_collision(struct object *obj1, char *style, int x, int y) {
-    int height = obj1->y2 - obj1->y;
-    int width = obj1->x2 - obj1->x;
+    for (int i = 0; i < obj1->y2 - obj1->y; ++i) {
+        if ( y + i < 0 ||  y + i >= screenSizeY) continue;
 
-    for (int i = 0; i < height; ++i) {
-        int screenY = y + i;
-        if (screenY < 0 || screenY >= screenSizeY) continue;
-
-        for (int j = 0; j < width; ++j) {
+        for (int j = 0; j < obj1->x2 - obj1->x; ++j) {
             int screenX = x + j;
-            if (screenX < 0 || screenX >= screenSizeX) continue;
-
             if (obj1->space[i][j].id == 999) continue;
-            if (screen[screenY][screenX].id == 999) continue;
-            if (screen[screenY][screenX].style == style) return 1;
+            if (screen[y + i][x + j].id == 999) continue;
+            if (screen[y + i][x + j].style == style) return 1;
         }
     }
 
@@ -284,24 +279,15 @@ int check_style_collision(struct object *obj1, char *style, int x, int y) {
 
 
 int check_char_collision(struct object *obj1, char ch, int x, int y) {
-    int height = obj1->y2 - obj1->y;
-    int width = obj1->x2 - obj1->x;
+    if (x < 0 || y < 0 || x + obj1->x2 - obj1->x > screenSizeX || y + obj1->y2 - obj1->y > screenSizeY) return 0;
 
-    if (x < 0 || y < 0 || x + width > screenSizeX || y + height > screenSizeY) return 0;
-
-    for (int i = 0; i < height; ++i) {
-        int screenY = y + i;
-        if (screenY < 0 || screenY >= screenSizeY) continue;
-
-        for (int j = 0; j < width; ++j) {
-            int screenX = x + j;
-            if (screenX < 0 || screenX >= screenSizeX) continue;
-
+    for (int i = 0; i < obj1->y2 - obj1->y; ++i) {
+        if (y + i < 0 ||y + i >= screenSizeY) continue;
+        for (int j = 0; j < obj1->x2 - obj1->x; ++j) {
+            if (x + j < 0 || x + j >= screenSizeX) continue;
             if (obj1->space[i][j].id == 999) continue;
-
-            if (screen[screenY][screenX].id == 999) continue;
-
-            if (screen[screenY][screenX].ch == ch) return 1;
+            if (screen[y + i][x + j].id == 999) continue;
+            if (screen[y + i][x + j].ch == ch) return 1;
         }
     }
 
@@ -309,20 +295,13 @@ int check_char_collision(struct object *obj1, char ch, int x, int y) {
 }
 
 int check_id_collision(struct object *obj1, int id, int x, int y) {
-    int height = obj1->y2 - obj1->y;
-    int width = obj1->x2 - obj1->x;
+    if (x < 0 || y < 0 || x + obj1->x2 - obj1->x > screenSizeX || y + obj1->y2 - obj1->y > screenSizeY) return 0;
 
-    if (x < 0 || y < 0 || x + width > screenSizeX || y + height > screenSizeY) return 0;
-
-    for (int i = 0; i < height; ++i) {
-        int screenY = y + i;
-        if (screenY < 0 || screenY >= screenSizeY) continue;
-
-        for (int j = 0; j < width; ++j) {
-            int screenX = x + j;
-            if (screenX < 0 || screenX >= screenSizeX) continue;
-
-            if (screen[screenY][screenX].id == id) return 1;
+    for (int i = 0; i < obj1->y2 - obj1->y; ++i) {
+        if (y + i < 0 || y + i >= screenSizeY) continue;
+        for (int j = 0; j < obj1->x2 - obj1->x; ++j) {
+            if (x + j < 0 || x + j >= screenSizeX) continue;
+            if (screen[y + i][x + j].id == id) return 1;
         }
     }
 
@@ -349,4 +328,33 @@ int clear_object_on_point(struct object * obj, char backgroundChar, char * backg
             screen[i + y][j + x].style = backgroundStyle;
         }
     }
+}
+
+int move_object_with_no_id(struct object * obj, int x, int y, int idToIgnore, char backgroundChar, char * backgroundStyle, int id) {
+    int lenx = obj->x2 - obj->x;
+    int leny = obj->y2 - obj->y;
+
+    if (x < 0 || y < 0 || x + lenx > screenSizeX || y + leny > screenSizeY)
+        return 0;
+
+    clear_object(obj, backgroundChar, backgroundStyle, id);
+    obj->x = x;
+    obj->y = y;
+    obj->x2 = x + lenx;
+    obj->y2 = y + leny;
+
+    put_object_with_no_id(obj, idToIgnore);
+    return 1;
+}
+
+int put_object_with_no_id(struct object * obj, int idToIgnore){
+    if (obj->y < 0 || obj->y2 > screenSizeY || obj->x < 0 || obj->x2 > screenSizeX) return 0;
+    for (int i = 0; i < obj->y2 - obj->y; i++) {
+        for (int j = 0; j < obj->x2 - obj->x; j++) {
+            if ((i + obj->y < screenSizeY) && (j + obj->x < screenSizeX) && obj->space[i][j].id != idToIgnore) {
+                screen[i + obj->y][j + obj->x] = obj->space[i][j];
+            }
+        }
+    }
+    return 1;
 }
