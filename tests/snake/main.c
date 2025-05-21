@@ -1,6 +1,7 @@
 #include "engine.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 struct snakeNode {
     int x, y;
@@ -51,9 +52,10 @@ int move_snake(struct snakeNode *head, struct object *snakePixel, int direction,
         current = current->before;
     }
 
+    if (!strcmp(screen[newY][newX].style, "\e[42m")) return 0;
     head->x = newX;
     head->y = newY;
-    if (check_style_collision(snakePixel, "\e[41m", head->x, head->y)){ 
+    if (check_style_collision(snakePixel, "\e[41m", head->x, head->y)){
         (*score)++;
         move_apple(apple);
         struct snakeNode *last = head;
@@ -163,7 +165,8 @@ int main() {
         if (!move_snake(&head, &snakePixel, direction, step, &score, &apple)) break;
         show_score(score);
         print_screen();
-        sleep_ms((100-score > 50) ? 100-score : 50);
+        sleep_ms((100-score >=
+             25) ? 100-score : 25);
     }
 
     printf("\e[?25h");
